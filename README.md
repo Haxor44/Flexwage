@@ -180,10 +180,10 @@ dfx canister call backend send_btc '("bcrt1pvd8yj03ts02lleztzf3em0glwrw7p03lumk4
 	<tbody>
 		<tr>
             <td align="center">
-                <a href="https://github.com/kristoferlund">
-                    <img src="https://avatars.githubusercontent.com/u/9698363?v=4" width="100;" alt="kristoferlund"/>
+                <a href="https://github.com/Haxor44">
+                    <img src="https://avatars.githubusercontent.com/u/50330948?v=4" width="100;" alt="Haxor44"/>
                     <br />
-                    <sub><b>Kristofer</b></sub>
+                    <sub><b>Haxor44</b></sub>
                 </a>
             </td>
 		</tr>
