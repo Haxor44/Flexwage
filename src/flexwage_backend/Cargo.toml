@@ -1,0 +1,18 @@
+[package]
+name = "flexwage_backend"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+candid.workspace = true
+ic-cdk.workspace = true
+serde.workspace = true
+ic-stable-structures.workspace = true
+ic-cdk-timers.workspace = true
+
+[dependencies.time]
+version = "0.3"
+features = ["serde", "formatting", "parsing"]

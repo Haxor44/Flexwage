@@ -1,0 +1,214 @@
+type Time = int;
+type UserId = text;
+type ShiftId = text;
+type WorkHistoryId = text;
+type RatingId = text;
+
+// User Types
+type UserType = variant {
+  Worker;
+  Business;
+};
+
+// User Profile
+type UserProfile = record {
+  id: UserId;
+  owner_principal: principal;
+  user_type: UserType;
+  name: text;
+  email: text;
+  phone: opt text;
+  location: text;
+  created_at: Time;
+  updated_at: Time;
+  did_document: opt text; // Decentralized Identity Document
+};
+
+// Worker-specific profile data
+type WorkerProfile = record {
+  user_id: UserId;
+  skills: vec text;
+  experience_level: text;
+  availability: vec text;
+  bio: opt text;
+  total_shifts_completed: nat64;
+  average_rating: opt float32;
+  is_verified: bool;
+};
+
+// Business-specific profile data
+type BusinessProfile = record {
+  user_id: UserId;
+  business_name: text;
+  business_type: text;
+  business_size: opt text;
+  address: opt text;
+  description: opt text;
+  is_verified: bool;
+};
+
+// Shift Status
+type ShiftStatus = variant {
+  Draft;
+  Open;
+  Claimed;
+  Approved;
+  InProgress;
+  Completed;
+  Cancelled;
+};
+
+// Shift Details
+type Shift = record {
+  id: ShiftId;
+  business_id: UserId;
+  role: text;
+  date: text;
+  start_time: text;
+  end_time: text;
+  pay_rate: float32;
+  location: text;
+  description: opt text;
+  requirements: vec text;
+  status: ShiftStatus;
+  assigned_worker: opt UserId;
+  applicants: vec UserId;
+  is_urgent: bool;
+  created_at: Time;
+  updated_at: Time;
+};
+
+// Work History Entry (for DID portability)
+type WorkHistory = record {
+  id: WorkHistoryId;
+  worker_id: UserId;
+  business_id: UserId;
+  shift_id: ShiftId;
+  role: text;
+  date_worked: text;
+  hours_worked: float32;
+  pay_earned: float32;
+  business_name: text;
+  location: text;
+  completed_at: Time;
+  verification_hash: text; // For integrity verification
+};
+
+// Rating Entry (for DID portability)
+type Rating = record {
+  id: RatingId;
+  worker_id: UserId;
+  business_id: UserId;
+  shift_id: ShiftId;
+  rating: nat8; // 1-5 stars
+  comment: opt text;
+  business_name: text;
+  role: text;
+  date_worked: text;
+  created_at: Time;
+  verification_hash: text; // For integrity verification
+};
+
+// DID Document structure
+type DIDDocument = record {
+  worker_id: UserId;
+  work_history: vec WorkHistoryId;
+  ratings: vec RatingId;
+  total_shifts: nat64;
+  average_rating: opt float32;
+  skills_verified: vec text;
+  created_at: Time;
+  updated_at: Time;
+  signature: text; // Cryptographic signature for authenticity
+};
+
+// Application to a shift
+type ShiftApplication = record {
+  shift_id: ShiftId;
+  worker_id: UserId;
+  applied_at: Time;
+  message: opt text;
+  status: variant { Pending; Approved; Rejected };
+};
+
+// Notification types
+type NotificationType = variant {
+  ShiftPosted;
+  ShiftClaimed;
+  ShiftApproved;
+  ShiftRejected;
+  ShiftCompleted;
+  ShiftCancelled;
+  PaymentProcessed;
+};
+
+type Notification = record {
+  id: text;
+  user_id: UserId;
+  notification_type: NotificationType;
+  title: text;
+  message: text;
+  related_shift_id: opt ShiftId;
+  is_read: bool;
+  created_at: Time;
+};
+
+// API Result types
+type Result_1 = variant { Ok: UserProfile; Err: text };
+type Result_2 = variant { Ok: WorkerProfile; Err: text };
+type Result_3 = variant { Ok: BusinessProfile; Err: text };
+type Result_4 = variant { Ok: Shift; Err: text };
+type Result_5 = variant { Ok: vec Shift; Err: text };
+type Result_6 = variant { Ok: DIDDocument; Err: text };
+type Result_7 = variant { Ok: vec WorkHistory; Err: text };
+type Result_8 = variant { Ok: vec Rating; Err: text };
+type Result_9 = variant { Ok: bool; Err: text };
+type Result_10 = variant { Ok: vec Notification; Err: text };
+
+service : {
+  // Authentication & User Management
+  create_user_profile: (UserProfile) -> (Result_1);
+  get_user_profile: (principal) -> (Result_1) query;
+  update_user_profile: (UserProfile) -> (Result_1);
+  
+  // Worker-specific functions
+  create_worker_profile: (WorkerProfile) -> (Result_2);
+  get_worker_profile: (UserId) -> (Result_2) query;
+  update_worker_profile: (WorkerProfile) -> (Result_2);
+  
+  // Business-specific functions
+  create_business_profile: (BusinessProfile) -> (Result_3);
+  get_business_profile: (UserId) -> (Result_3) query;
+  update_business_profile: (BusinessProfile) -> (Result_3);
+  
+  // Shift Management
+  create_shift: (Shift) -> (Result_4);
+  get_shift: (ShiftId) -> (Result_4) query;
+  update_shift: (ShiftId, Shift) -> (Result_4);
+  delete_shift: (ShiftId) -> (Result_9);
+  get_shifts_by_business: (UserId) -> (Result_5) query;
+  get_available_shifts: (opt text) -> (Result_5) query; // location filter
+  
+  // Shift Applications
+  apply_to_shift: (ShiftId, opt text) -> (Result_9);
+  get_shift_applications: (ShiftId) -> (vec ShiftApplication) query;
+  approve_application: (ShiftId, UserId) -> (Result_9);
+  reject_application: (ShiftId, UserId) -> (Result_9);
+  
+  // Work History & DID
+  create_work_history: (WorkHistory) -> (Result_9);
+  get_worker_history: (UserId) -> (Result_7) query;
+  create_rating: (Rating) -> (Result_9);
+  get_worker_ratings: (UserId) -> (Result_8) query;
+  get_worker_did: (UserId) -> (Result_6) query;
+  export_worker_did: (UserId) -> (Result_6) query; // For portability
+  
+  // Notifications
+  create_notification: (Notification) -> (Result_9);
+  get_user_notifications: (UserId) -> (Result_10) query;
+  mark_notification_read: (text) -> (Result_9); // notification id
+  
+  // Utility functions
+  get_caller_principal: () -> (principal) query;
+  health_check: () -> (bool) query;
+}
